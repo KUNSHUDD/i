@@ -1,218 +1,435 @@
 <#
 .SYNOPSIS
-    CS2 战神辅助系统 - 最强外挂模拟器
+   人生模拟器 - 终端版（带AI交互）
 .DESCRIPTION
-    模拟全球最强CS2辅助工具，包含完整功能分类和逼真黑客效果
-.NOTES
-    本程序仅为模拟界面，不含实际作弊功能
-    仅供学习编程技术使用
+   一个在Windows终端中运行的人生模拟游戏，带有AI交互功能
+.AUTHOR
+   终端游戏开发者
 #>
 
-# 强制管理员权限
-if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
-    Write-Host " [!] 需要管理员权限！" -ForegroundColor Red
-    Start-Sleep 2
-    exit
-}
-
-# 初始化设置
-$host.UI.RawUI.WindowTitle = "CS2 战神辅助 v10.0"
-$host.UI.RawUI.BackgroundColor = "Black"
+# 设置控制台窗口
+$Host.UI.RawUI.WindowTitle = "人生模拟器 v2.0 (AI增强版)"
+$Host.UI.RawUI.BackgroundColor = "Black"
+$Host.UI.RawUI.ForegroundColor = "White"
 Clear-Host
 
-# 随机延迟效果
-function Get-RandomDelay {
-    return (Get-Random -Minimum 50 -Maximum 800)/1000
-}
+# API配置（用户提供的凭据）
+$global:API_APPID = "82f64706"
+$global:API_APISecret = "ODVlYjIzNjg5ZWUwZTBiMWRiNWVkOTU3"
+$global:API_APIKey = "51b4b5c3c13b26f26a9eadb628be71ba"
+$global:AI_Enabled = $true  # 默认启用AI
 
-# 动态加载效果
-function Show-HackLoading {
-    param([string]$msg, [int]$steps=5)
-    
-    $chars = @("▌", "■", "▐", "□", "▬", "═", "║")
-    $colors = @("Green", "Cyan", "Yellow", "Magenta")
-    
-    Write-Host " [>] $msg" -NoNewline -ForegroundColor Cyan
-    for ($i = 0; $i -lt $steps; $i++) {
-        Write-Host $chars[(Get-Random -Maximum $chars.Count)] -NoNewline -ForegroundColor $colors[(Get-Random -Maximum $colors.Count)]
-        Start-Sleep (Get-RandomDelay)
-    }
-    Write-Host " 成功!" -ForegroundColor Green
-}
+# 定义颜色
+$titleColor = "Cyan"
+$menuColor = "Green"
+$highlightColor = "Yellow"
+$infoColor = "Gray"
+$aiColor = "Magenta"
 
-# 检查CS2进程
-function Check-CS2 {
-    Show-HackLoading -msg "扫描CS2进程" -steps 3
-    $proc = Get-Process -Name "cs2" -ErrorAction SilentlyContinue
-    
-    if ($proc) {
-        Write-Host " [√] CS2已运行 (PID: $($proc.Id))" -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host " [X] 未找到CS2进程!" -ForegroundColor Red
-        return $false
-    }
+# 显示开始界面
+function Show-SplashScreen {
+    Clear-Host
+    Write-Host ""
+    Write-Host "  ██╗     ██╗███╗   ██╗███████╗    ███████╗██╗███╗   ███╗██╗   ██╗██╗      █████╗ ████████╗ ██████╗ ██████╗ " -ForegroundColor $titleColor
+    Write-Host "  ██║     ██║████╗  ██║██╔════╝    ██╔════╝██║████╗ ████║██║   ██║██║     ██╔══██╗╚══██╔══╝██╔═══██╗██╔══██╗" -ForegroundColor $titleColor
+    Write-Host "  ██║     ██║██╔██╗ ██║█████╗      █████╗  ██║██╔████╔██║██║   ██║██║     ███████║   ██║   ██║   ██║██████╔╝" -ForegroundColor $titleColor
+    Write-Host "  ██║     ██║██║╚██╗██║██╔══╝      ██╔══╝  ██║██║╚██╔╝██║██║   ██║██║     ██╔══██║   ██║   ██║   ██║██╔══██╗" -ForegroundColor $titleColor
+    Write-Host "  ███████╗██║██║ ╚████║███████╗    ██║     ██║██║ ╚═╝ ██║╚██████╔╝███████╗██║  ██║   ██║   ╚██████╔╝██║  ██║" -ForegroundColor $titleColor
+    Write-Host "  ╚══════╝╚═╝╚═╝  ╚═══╝╚══════╝    ╚═╝     ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝" -ForegroundColor $titleColor
+    Write-Host ""
+    Write-Host "                                        终端版人生模拟体验" -ForegroundColor $infoColor
+    Write-Host ""
+    Write-Host "                                        版本 2.0 | AI增强版" -ForegroundColor $aiColor
+    Write-Host ""
+    Write-Host ""
 }
 
 # 主菜单
 function Show-MainMenu {
-    Clear-Host
-    Write-Host @"
-███████╗███████╗██████╗ ██╗   ██╗███████╗██████╗ 
-██╔════╝╚══███╔╝██╔══██╗██║   ██║██╔════╝██╔══██╗
-█████╗    ███╔╝ ██████╔╝██║   ██║█████╗  ██████╔╝
-██╔══╝   ███╔╝  ██╔══██╗╚██╗ ██╔╝██╔══╝  ██╔══██╗
-███████╗███████╗██║  ██║ ╚████╔╝ ███████╗██║  ██║
-╚══════╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 战神辅助 v10.0 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-"@ -ForegroundColor Red
-
-    Write-Host "`n[主功能菜单]" -ForegroundColor Yellow
-    Write-Host " 1. 视觉增强系统" -ForegroundColor Cyan
-    Write-Host " 2. 自动瞄准系统" -ForegroundColor Magenta
-    Write-Host " 3. 雷达破解系统" -ForegroundColor Green
-    Write-Host " 4. 武器控制系统" -ForegroundColor Blue
-    Write-Host " 5. 信息显示系统" -ForegroundColor White
-    Write-Host " 6. 反检测系统" -ForegroundColor DarkRed
-    Write-Host " 0. 退出系统" -ForegroundColor Gray
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkRed
-
-    $choice = Read-Host "`n[输入选择] (0-6)"
-    return $choice
-}
-
-# 视觉增强菜单
-function Show-VisualMenu {
-    Clear-Host
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 视觉增强系统 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkCyan
+    $menuItems = @("开始游戏", "设置", "退出游戏")
+    $selectedItem = 0
     
-    $features = @(
-        "ESP方框透视",
-        "玩家发光效果",
-        "物品高亮显示",
-        "穿墙透视模式",
-        "烟雾透视破解",
-        "闪光弹免疫",
-        "夜视模式"
-    )
-    
-    for ($i = 0; $i -lt $features.Count; $i++) {
-        Write-Host " $($i+1). $($features[$i])" -ForegroundColor Cyan
-    }
-    Write-Host " 0. 返回主菜单" -ForegroundColor Gray
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkCyan
-    
-    $choice = Read-Host "`n[选择功能] (0-$($features.Count))"
-    return $choice
-}
-
-# 自动瞄准菜单
-function Show-AimbotMenu {
-    Clear-Host
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 自动瞄准系统 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkMagenta
-    
-    $features = @(
-        "头部自动锁定",
-        "身体自动锁定",
-        "动态平滑瞄准",
-        "自动开枪功能",
-        "可见性检查",
-        "队友免疫",
-        "自定义FOV"
-    )
-    
-    for ($i = 0; $i -lt $features.Count; $i++) {
-        Write-Host " $($i+1). $($features[$i])" -ForegroundColor Magenta
-    }
-    Write-Host " 0. 返回主菜单" -ForegroundColor Gray
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkMagenta
-    
-    $choice = Read-Host "`n[选择功能] (0-$($features.Count))"
-    return $choice
-}
-
-# 模拟功能激活
-function Activate-Feature {
-    param([string]$featureName)
-    
-    $steps = @(
-        "注入DLL到CS2进程",
-        "绕过VAC检测",
-        "解密游戏内存",
-        "获取玩家坐标",
-        "修改游戏数据",
-        "隐藏注入痕迹"
-    )
-    
-    foreach ($step in $steps) {
-        Show-HackLoading -msg "$step" -steps (Get-Random -Minimum 3 -Maximum 6)
-        Start-Sleep (Get-RandomDelay)
-    }
-    
-    Write-Host "`n [战神系统] $featureName 已激活！" -ForegroundColor Green
-    Write-Host " [状态] 完全隐藏 | 100%安全" -ForegroundColor Yellow
-    Start-Sleep 2
-}
-
-# 主程序
-function Main {
-    # 初始检查
-    if (-not (Check-CS2)) {
-        Write-Host "`n [!] 请先启动CS2游戏！" -ForegroundColor Red
-        Start-Sleep 3
-        exit
-    }
-    
-    # 主循环
-    while ($true) {
-        $choice = Show-MainMenu
+    do {
+        Show-SplashScreen
+        Write-Host "`n`n" -ForegroundColor $menuColor
         
-        switch ($choice) {
-            "1" { # 视觉增强
-                while ($true) {
-                    $subChoice = Show-VisualMenu
-                    if ($subChoice -eq "0") { break }
-                    
-                    $featureName = @("ESP方框透视","玩家发光","物品高亮","穿墙透视","烟雾透视","闪光免疫","夜视模式")[$subChoice-1]
-                    Activate-Feature -featureName $featureName
+        for ($i = 0; $i -lt $menuItems.Count; $i++) {
+            if ($i -eq $selectedItem) {
+                Write-Host ("  > " + $menuItems[$i] + " <") -ForegroundColor $highlightColor
+            } else {
+                Write-Host ("    " + $menuItems[$i]) -ForegroundColor $menuColor
+            }
+        }
+        
+        Write-Host "`n使用上下箭头键选择，按Enter键确认" -ForegroundColor $infoColor
+        
+        $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").VirtualKeyCode
+        
+        switch ($key) {
+            38 { # 上箭头
+                $selectedItem = ($selectedItem - 1) % $menuItems.Count
+                if ($selectedItem -lt 0) { $selectedItem = $menuItems.Count - 1 }
+            }
+            40 { # 下箭头
+                $selectedItem = ($selectedItem + 1) % $menuItems.Count
+            }
+            13 { # 回车
+                return $selectedItem
+            }
+        }
+    } while ($true)
+}
+
+# 调用AI API
+function Invoke-AIInteraction {
+    param (
+        [string]$prompt
+    )
+    
+    if (-not $global:AI_Enabled) {
+        return "AI功能已禁用"
+    }
+    
+    try {
+        # 构建请求头
+        $headers = @{
+            "Content-Type" = "application/json"
+            "Authorization" = "Bearer $global:API_APIKey"
+        }
+        
+        # 构建请求体
+        $body = @{
+            "header" = @{
+                "app_id" = $global:API_APPID
+                "uid" = "12345"
+            }
+            "parameter" = @{
+                "chat" = @{
+                    "domain" = "general"
+                    "temperature" = 0.5
+                    "max_tokens" = 1024
                 }
             }
-            "2" { # 自动瞄准
-                while ($true) {
-                    $subChoice = Show-AimbotMenu
-                    if ($subChoice -eq "0") { break }
-                    
-                    $featureName = @("头部锁定","身体锁定","平滑瞄准","自动开枪","可见检查","队友免疫","自定义FOV")[$subChoice-1]
-                    Activate-Feature -featureName $featureName
+            "payload" = @{
+                "message" = @{
+                    "text" = @(
+                        @{
+                            "role" = "user"
+                            "content" = $prompt
+                        }
+                    )
                 }
             }
-            "0" { # 退出
-                Write-Host "`n [>] 正在清除所有痕迹..." -ForegroundColor Yellow
-                Start-Sleep 1
+        } | ConvertTo-Json -Depth 10
+        
+        # 调用API
+        $response = Invoke-RestMethod -Uri "https://api.xf-yun.com/v1/chat" `
+                                     -Method Post `
+                                     -Headers $headers `
+                                     -Body $body
+        
+        # 提取并返回AI响应
+        if ($response.payload.choices.text.content) {
+            return $response.payload.choices.text.content
+        } else {
+            return "AI没有返回有效响应"
+        }
+    } catch {
+        Write-Host "AI调用失败: $_" -ForegroundColor "Red"
+        return "AI服务暂时不可用"
+    }
+}
+
+# 开始游戏
+function Start-Game {
+    Clear-Host
+    Write-Host "`n`n欢迎来到人生模拟器！" -ForegroundColor $titleColor
+    Write-Host "`n在这个游戏中，你将体验从出生到老去的完整人生。" -ForegroundColor $menuColor
+    
+    if ($global:AI_Enabled) {
+        Write-Host "`nAI辅助功能: 已启用" -ForegroundColor $aiColor
+    } else {
+        Write-Host "`nAI辅助功能: 已禁用" -ForegroundColor $infoColor
+    }
+    
+    Write-Host "`n按任意键继续..." -ForegroundColor $infoColor
+    $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") | Out-Null
+    
+    # 角色创建
+    Clear-Host
+    Write-Host "`n`n角色创建" -ForegroundColor $titleColor
+    $name = Read-Host "`n输入你的角色名字"
+    $gender = Read-Host "选择性别 (男/女)" -ForegroundColor $menuColor
+    while ($gender -notin @("男","女")) {
+        $gender = Read-Host "请输入有效的性别 (男/女)"
+    }
+    
+    # 初始化角色属性
+    $character = @{
+        Name = $name
+        Gender = $gender
+        Age = 0
+        Health = 100
+        Intelligence = 50
+        Happiness = 70
+        Wealth = 30
+    }
+    
+    # 游戏主循环
+    while ($character.Age -lt 100 -and $character.Health -gt 0) {
+        Clear-Host
+        Write-Host "`n$($character.Name)的人生 - $($character.Age)岁" -ForegroundColor $titleColor
+        Write-Host "`n健康: $($character.Health) | 智力: $($character.Intelligence)" -ForegroundColor "Green"
+        Write-Host "幸福: $($character.Happiness) | 财富: $($character.Wealth)" -ForegroundColor "Green"
+        
+        # 年龄相关事件
+        $event = Get-AgeEvent -Age $character.Age
+        Write-Host "`n$event" -ForegroundColor $highlightColor
+        
+        # AI交互提示
+        if ($global:AI_Enabled -and ($character.Age % 10 -eq 0 -or $character.Age -eq 0)) {
+            $aiPrompt = "你是一个人生模拟游戏的AI助手。玩家现在$($character.Age)岁，刚经历了: $event。请给出一段简短的人生建议或评论。"
+            $aiResponse = Invoke-AIInteraction -prompt $aiPrompt
+            Write-Host "`nAI建议: $aiResponse" -ForegroundColor $aiColor
+        }
+        
+        # 选择行动
+        $actions = @("继续生活", "寻求AI建议", "查看状态", "退出游戏")
+        $action = Show-ChoiceMenu -Title "选择你的行动" -Options $actions
+        
+        switch ($action) {
+            1 { # 继续生活
+                # 正常年龄增长
+                $character.Age++
                 
-                $steps = @(
-                    "删除内存注入",
-                    "恢复原始DLL",
-                    "清除日志文件",
-                    "重置系统状态"
-                )
+                # 随机属性变化
+                $character.Health += Get-Random -Minimum -5 -Maximum 10
+                $character.Intelligence += Get-Random -Minimum 0 -Maximum 5
+                $character.Happiness += Get-Random -Minimum -10 -Maximum 15
+                $character.Wealth += Get-Random -Minimum -20 -Maximum 30
                 
-                foreach ($step in $steps) {
-                    Show-HackLoading -msg $step
-                    Start-Sleep (Get-RandomDelay)
-                }
-                
-                Write-Host "`n [战神系统] 所有操作已安全撤销！" -ForegroundColor Green
-                Start-Sleep 2
-                exit
+                # 确保属性在合理范围内
+                $character.Health = [Math]::Max(0, [Math]::Min(100, $character.Health))
+                $character.Intelligence = [Math]::Max(0, [Math]::Min(100, $character.Intelligence))
+                $character.Happiness = [Math]::Max(0, [Math]::Min(100, $character.Happiness))
+                $character.Wealth = [Math]::Max(0, $character.Wealth)
             }
-            default {
-                Write-Host "`n [!] 无效的选择！" -ForegroundColor Red
-                Start-Sleep 1
+            2 { # 寻求AI建议
+                $question = Read-Host "`n向AI提问关于你人生的问题"
+                $aiResponse = Invoke-AIInteraction -prompt "在人生模拟游戏中，玩家$($character.Name)现在$($character.Age)岁，属性: 健康$($character.Health), 智力$($character.Intelligence), 幸福$($character.Happiness), 财富$($character.Wealth)。玩家问: $question"
+                Write-Host "`nAI回复: $aiResponse" -ForegroundColor $aiColor
+                Write-Host "`n按任意键继续..." -ForegroundColor $infoColor
+                $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") | Out-Null
+            }
+            3 { # 查看状态
+                Show-CharacterStatus -Character $character
+            }
+            4 { # 退出游戏
+                return
             }
         }
     }
+    
+    # 游戏结束
+    Clear-Host
+    if ($character.Health -le 0) {
+        Write-Host "`n`n很遗憾，$($character.Name)因健康问题离开了人世..." -ForegroundColor "Red"
+        Write-Host "享年 $($character.Age) 岁" -ForegroundColor "Red"
+    } else {
+        Write-Host "`n`n恭喜！$($character.Name)度过了完整的一生！" -ForegroundColor $titleColor
+        Write-Host "享年 $($character.Age) 岁" -ForegroundColor $titleColor
+    }
+    
+    # 人生总结
+    if ($global:AI_Enabled) {
+        $aiPrompt = "为一个刚刚结束的人生模拟游戏角色写一段简短的总结。角色名叫$($character.Name)，$($character.Gender)性，活了$($character.Age)岁，最终属性: 健康$($character.Health), 智力$($character.Intelligence), 幸福$($character.Happiness), 财富$($character.Wealth)。"
+        $aiSummary = Invoke-AIInteraction -prompt $aiPrompt
+        Write-Host "`n人生总结: $aiSummary" -ForegroundColor $aiColor
+    }
+    
+    Write-Host "`n按任意键返回主菜单..." -ForegroundColor $infoColor
+    $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") | Out-Null
 }
 
-# 启动程序
-Main
+# 根据年龄获取事件
+function Get-AgeEvent {
+    param ($Age)
+    
+    $events = @{
+        0 = "你出生了！一个全新的生命来到这个世界。"
+        1 = "你学会了走路和说简单的话。"
+        5 = "你开始上幼儿园，认识了新朋友。"
+        6 = "你上了小学，开始了正式的学习生涯。"
+        12 = "你升入初中，青春期开始了。"
+        15 = "你进入高中，学习压力变大了。"
+        18 = "你高中毕业，即将步入大学或社会。"
+        22 = "你大学毕业，开始寻找工作。"
+        25 = "你在职场上取得了一些成就。"
+        30 = "你开始思考人生的意义和方向。"
+        35 = "你在事业上更加稳定，可能组建了家庭。"
+        40 = "中年危机？你开始反思自己的人生选择。"
+        50 = "你的事业达到巅峰，但也开始考虑退休计划。"
+        60 = "你退休了，开始享受晚年生活。"
+        70 = "你有了更多时间陪伴家人和追求兴趣爱好。"
+        80 = "你回顾自己漫长而丰富的一生。"
+        90 = "你成为家族中的长者，受到尊敬。"
+        100 = "你庆祝了自己的百岁生日！"
+    }
+    
+    if ($events.ContainsKey($Age)) {
+        return $events[$Age]
+    } elseif ($Age -lt 5) {
+        return "你在快乐地成长，学习新事物。"
+    } elseif ($Age -lt 12) {
+        return "你在小学里学习和玩耍。"
+    } elseif ($Age -lt 18) {
+        return "你在中学里努力学习。"
+    } elseif ($Age -lt 25) {
+        return "你在大学或工作中积累经验。"
+    } elseif ($Age -lt 40) {
+        return "你在事业和家庭中寻找平衡。"
+    } elseif ($Age -lt 60) {
+        return "你在事业上稳步前进，同时规划未来。"
+    } else {
+        return "你享受着退休生活的宁静。"
+    }
+}
+
+# 显示选择菜单
+function Show-ChoiceMenu {
+    param (
+        [string]$Title,
+        [array]$Options
+    )
+    
+    $selected = 0
+    do {
+        Clear-Host
+        Write-Host "`n$Title" -ForegroundColor $titleColor
+        Write-Host "`n"
+        
+        for ($i = 0; $i -lt $Options.Count; $i++) {
+            if ($i -eq $selected) {
+                Write-Host ("  > " + $Options[$i] + " <") -ForegroundColor $highlightColor
+            } else {
+                Write-Host ("    " + $Options[$i]) -ForegroundColor $menuColor
+            }
+        }
+        
+        $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").VirtualKeyCode
+        
+        switch ($key) {
+            38 { # 上箭头
+                $selected = ($selected - 1) % $Options.Count
+                if ($selected -lt 0) { $selected = $Options.Count - 1 }
+            }
+            40 { # 下箭头
+                $selected = ($selected + 1) % $Options.Count
+            }
+            13 { # 回车
+                return $selected
+            }
+        }
+    } while ($true)
+}
+
+# 显示角色状态
+function Show-CharacterStatus {
+    param ($Character)
+    
+    Clear-Host
+    Write-Host "`n角色状态" -ForegroundColor $titleColor
+    Write-Host "`n名字: $($Character.Name)" -ForegroundColor $menuColor
+    Write-Host "性别: $($Character.Gender)" -ForegroundColor $menuColor
+    Write-Host "年龄: $($Character.Age)岁" -ForegroundColor $menuColor
+    Write-Host "`n属性:" -ForegroundColor $titleColor
+    Write-Host "健康: $(Get-ProgressBar $Character.Health)" -ForegroundColor "Red"
+    Write-Host "智力: $(Get-ProgressBar $Character.Intelligence)" -ForegroundColor "Blue"
+    Write-Host "幸福: $(Get-ProgressBar $Character.Happiness)" -ForegroundColor "Yellow"
+    Write-Host "财富: $($Character.Wealth) $" -ForegroundColor "Green"
+    
+    Write-Host "`n按任意键继续..." -ForegroundColor $infoColor
+    $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") | Out-Null
+}
+
+# 获取进度条
+function Get-ProgressBar {
+    param ($Value)
+    
+    $filled = [Math]::Floor($Value / 10)
+    $empty = 10 - $filled
+    return ("[" + ("#" * $filled) + ("-" * $empty) + "] $Value%")
+}
+
+# 设置菜单
+function Show-Settings {
+    $selected = 0
+    $aiStatus = @("禁用", "启用")[$global:AI_Enabled -as [int]]
+    
+    do {
+        Clear-Host
+        Write-Host "`n设置" -ForegroundColor $titleColor
+        Write-Host "`n1. AI辅助: $aiStatus" -ForegroundColor $menuColor
+        Write-Host "2. 重置API密钥" -ForegroundColor $menuColor
+        Write-Host "3. 返回主菜单" -ForegroundColor $menuColor
+        
+        if ($selected -eq 0) {
+            Write-Host "`n> 切换AI辅助功能状态 <" -ForegroundColor $highlightColor
+        } elseif ($selected -eq 1) {
+            Write-Host "`n> 输入新的API密钥 <" -ForegroundColor $highlightColor
+        } else {
+            Write-Host "`n> 返回主菜单 <" -ForegroundColor $highlightColor
+        }
+        
+        Write-Host "`n使用上下箭头键选择，按Enter键确认" -ForegroundColor $infoColor
+        
+        $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown").VirtualKeyCode
+        
+        switch ($key) {
+            38 { # 上箭头
+                $selected = ($selected - 1) % 3
+                if ($selected -lt 0) { $selected = 2 }
+            }
+            40 { # 下箭头
+                $selected = ($selected + 1) % 3
+            }
+            13 { # 回车
+                switch ($selected) {
+                    0 { 
+                        $global:AI_Enabled = -not $global:AI_Enabled
+                        $aiStatus = @("禁用", "启用")[$global:AI_Enabled -as [int]]
+                        Write-Host "`nAI辅助已$aiStatus" -ForegroundColor $highlightColor
+                        Start-Sleep -Seconds 1
+                    }
+                    1 {
+                        Clear-Host
+                        Write-Host "`nAPI设置" -ForegroundColor $titleColor
+                        $global:API_APPID = Read-Host "`n输入APPID (当前: $global:API_APPID)"
+                        $global:API_APISecret = Read-Host "输入APISecret (当前: 隐藏)"
+                        $global:API_APIKey = Read-Host "输入APIKey (当前: 隐藏)"
+                        Write-Host "`nAPI设置已更新！" -ForegroundColor $highlightColor
+                        Start-Sleep -Seconds 1
+                    }
+                    2 { return }
+                }
+            }
+        }
+    } while ($true)
+}
+
+# 主程序循环
+do {
+    $choice = Show-MainMenu
+    
+    switch ($choice) {
+        0 { Start-Game }
+        1 { Show-Settings }
+        2 { 
+            Clear-Host
+            Write-Host "`n`n感谢游玩人生模拟器！" -ForegroundColor $titleColor
+            Write-Host "再见！" -ForegroundColor $menuColor
+            Start-Sleep -Seconds 2
+            exit 
+        }
+    }
+} while ($true)
