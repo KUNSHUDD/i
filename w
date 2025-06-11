@@ -1,11 +1,10 @@
 <#
 .SYNOPSIS
-    CS2 高级控制终端 - 模拟黑客界面
+    CS2黑客终端模拟器 - 带逼真加载动画
 .DESCRIPTION
-    模拟CS2外挂控制界面，包含多种功能分类和黑客视觉效果
+    模拟CS2作弊终端界面，包含动态加载效果和随机延迟
 .NOTES
-    此脚本仅为模拟效果，不包含实际作弊功能
-    仅用于学习和演示目的
+    此脚本仅为界面模拟，不包含实际功能
 #>
 
 # 管理员检查
@@ -15,211 +14,188 @@ if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     exit
 }
 
-# 初始化设置
-$host.UI.RawUI.WindowTitle = "CS2 高级控制终端 v4.2.0"
+# 初始化终端
+$host.UI.RawUI.WindowTitle = "CS2 量子破解终端 v5.1.3"
 $host.UI.RawUI.BackgroundColor = "Black"
 $host.UI.RawUI.ForegroundColor = "Green"
 Clear-Host
 
-# 黑客ASCII艺术
-function Show-AsciiArt {
-    Write-Host @"
-  ____ ____ ___   ___   _____ ____  
- / ___/ ___|__ \ / _ \ / ____|___ \ 
-| |   \___ \  ) | | | | |      __) |
-| |___ ___) / /| |_| | |___  / __/ 
- \____|____/____|\___/ \____|_____|
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-█                                █
-█  反恐精英2 高级控制终端 v4.2.0 █
-█  仅限授权用户使用             █
-▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-"@ -ForegroundColor Green
+# 随机延迟函数
+function Get-RandomDelay {
+    return (Get-Random -Minimum 50 -Maximum 300)/100
 }
 
-# 模拟黑客加载效果
-function Invoke-HackerLoading {
-    param([string]$message, [int]$duration=2)
+# 动态加载动画
+function Show-LoadingAnimation {
+    param(
+        [string]$message,
+        [int]$steps = 5,
+        [int]$maxDelay = 500
+    )
     
     Write-Host " [>] $message" -NoNewline -ForegroundColor Cyan
-    for ($i = 0; $i -lt 5; $i++) {
-        Write-Host "." -NoNewline -ForegroundColor Yellow
-        Start-Sleep ($duration/5)
+    
+    # 随机进度点
+    $progressChars = @(".", ":", "·", "•", "≫")
+    for ($i = 0; $i -lt $steps; $i++) {
+        $delay = Get-Random -Minimum 100 -Maximum $maxDelay
+        $char = $progressChars | Get-Random
+        Write-Host $char -NoNewline -ForegroundColor Yellow
+        Start-Sleep ($delay/1000)
     }
-    Write-Host " √" -ForegroundColor Green
+    
+    # 随机结果
+    $results = @("√", "✓", "✔", "⚡", "☑")
+    $resultColors = @("Green", "Cyan", "Yellow", "Magenta")
+    Write-Host " $($results | Get-Random)" -ForegroundColor ($resultColors | Get-Random)
 }
 
-# 检查CS2进程
-function Check-CS2Process {
-    $cs2Process = Get-Process -Name "cs2" -ErrorAction SilentlyContinue
+# 模拟内存扫描效果
+function Invoke-MemoryScan {
+    $scanTypes = @(
+        "玩家实体扫描",
+        "武器数据结构",
+        "地图坐标系统",
+        "游戏状态检测",
+        "渲染管线分析"
+    )
     
-    if ($cs2Process) {
-        Write-Host " [√] CS2进程已找到 (PID: $($cs2Process.Id))" -ForegroundColor Green
-        return $true
-    } else {
-        Write-Host " [X] 未检测到CS2进程!" -ForegroundColor Red
-        return $false
+    foreach ($scan in $scanTypes) {
+        $delay = Get-Random -Minimum 1 -Maximum 3
+        Show-LoadingAnimation -message "内存扫描: $scan" -maxDelay 800
+        Start-Sleep $delay
+    }
+}
+
+# 模拟DLL注入过程
+function Invoke-DllInjection {
+    $steps = @(
+        "定位CS2进程内存",
+        "分配写入内存空间",
+        "绕过内存保护",
+        "写入Loader代码",
+        "执行远程线程",
+        "验证注入结果"
+    )
+    
+    foreach ($step in $steps) {
+        $delay = Get-Random -Minimum 1 -Maximum 4
+        Show-LoadingAnimation -message $step -steps (Get-Random -Minimum 3 -Maximum 8)
+        Start-Sleep $delay
     }
 }
 
 # 主菜单
 function Show-MainMenu {
     Clear-Host
-    Show-AsciiArt
-    
-    Write-Host "`n▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 主菜单 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkGreen
-    Write-Host " 1. 视觉增强功能" -ForegroundColor Cyan
-    Write-Host " 2. 自动瞄准系统" -ForegroundColor Magenta
-    Write-Host " 3. 雷达增强模块" -ForegroundColor Yellow
-    Write-Host " 4. 反后坐力控制" -ForegroundColor Red
-    Write-Host " 5. 游戏信息显示" -ForegroundColor Blue
-    Write-Host " 6. 高级绕过系统" -ForegroundColor DarkRed
-    Write-Host " 0. 退出系统" -ForegroundColor Gray
+    Write-Host @"
+  ____ ____ ___   ___   _____ ____    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+ / ___/ ___|__ \ / _ \ / ____|___ \   █ CS2量子破解终端 v5.1.3 █
+| |   \___ \  ) | | | | |      __) |  █ 仅限授权用户使用     █
+| |___ ___) / /| |_| | |___  / __/   ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+ \____|____/____|\___/ \____|_____/   
+"@ -ForegroundColor Green
+
+    Write-Host "`n▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 主控制台 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkGreen
+    Write-Host " 1. 量子视觉系统" -ForegroundColor Cyan
+    Write-Host " 2. 神经瞄准网络" -ForegroundColor Magenta
+    Write-Host " 3. 战术雷达破解" -ForegroundColor Yellow
+    Write-Host " 4. 武器控制模块" -ForegroundColor Red
+    Write-Host " 5. 信息提取系统" -ForegroundColor Blue
+    Write-Host " 6. 反检测协议" -ForegroundColor DarkRed
+    Write-Host " 0. 安全关闭系统" -ForegroundColor Gray
     Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkGreen
     
-    $choice = Read-Host "`n [？] 输入选择 (0-6)"
+    $choice = Read-Host "`n [量子输入] 选择功能 (0-6)"
     return $choice
 }
 
-# 视觉增强子菜单
+# 视觉系统子菜单
 function Show-VisualMenu {
     Clear-Host
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 视觉增强 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkCyan
+    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 量子视觉系统 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkCyan
     
-    # 模拟功能列表
-    $visualFeatures = @(
-        "墙壁透视 (ESP)",
-        "玩家发光效果",
-        "物品高亮显示",
-        "烟雾透视",
-        "闪光弹免疫",
-        "视野范围扩展",
-        "夜视模式"
+    $features = @(
+        "X射线透视 (物质穿透)",
+        "电磁光谱视觉",
+        "动态轮廓高亮",
+        "量子穿烟技术",
+        "时空闪光免疫",
+        "红外热成像",
+        "重力场可视化"
     )
     
-    for ($i = 0; $i -lt $visualFeatures.Count; $i++) {
-        Write-Host " $($i+1). $($visualFeatures[$i])" -ForegroundColor Cyan
+    for ($i = 0; $i -lt $features.Count; $i++) {
+        Write-Host " $($i+1). $($features[$i])" -ForegroundColor Cyan
     }
-    Write-Host " 0. 返回主菜单" -ForegroundColor Gray
+    Write-Host " 0. 返回主控制台" -ForegroundColor Gray
     Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkCyan
     
-    $choice = Read-Host "`n [？] 选择视觉功能 (0-$($visualFeatures.Count))"
+    $choice = Read-Host "`n [视觉输入] 选择模式 (0-$($features.Count))"
     return $choice
 }
 
-# 自动瞄准子菜单
-function Show-AimbotMenu {
-    Clear-Host
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 自动瞄准 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkMagenta
-    
-    $aimbotFeatures = @(
-        "头部锁定模式",
-        "身体锁定模式",
-        "动态平滑瞄准",
-        "自动开火",
-        "可见检查",
-        "队友免疫",
-        "自定义FOV设置"
-    )
-    
-    for ($i = 0; $i -lt $aimbotFeatures.Count; $i++) {
-        Write-Host " $($i+1). $($aimbotFeatures[$i])" -ForegroundColor Magenta
-    }
-    Write-Host " 0. 返回主菜单" -ForegroundColor Gray
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkMagenta
-    
-    $choice = Read-Host "`n [？] 选择瞄准功能 (0-$($aimbotFeatures.Count))"
-    return $choice
-}
-
-# 模拟黑客效果
-function Invoke-FakeHack {
-    param([string]$action)
-    
-    $phrases = @(
-        "正在注入DLL到CS2进程...",
-        "绕过VAC检测系统...",
-        "解密游戏内存数据...",
-        "获取玩家坐标矩阵...",
-        "修改游戏渲染管线...",
-        "建立安全通信通道...",
-        "混淆API调用痕迹...",
-        "更新特征码签名..."
-    )
-    
-    Write-Host "`n [>] 初始化$action子系统..." -ForegroundColor Yellow
-    Start-Sleep 1
-    
-    foreach ($phrase in $phrases) {
-        Write-Host " [>>] $phrase" -ForegroundColor ([ConsoleColor](Get-Random -Minimum 10 -Maximum 15))
-        Start-Sleep (Get-Random -Minimum 1 -Maximum 3)/2
-    }
-    
-    Write-Host " [√] $action 已成功激活!" -ForegroundColor Green
-    Start-Sleep 2
-}
-
-# 主程序逻辑
+# 主程序
 function Main {
-    # 初始加载效果
-    Show-AsciiArt
-    Invoke-HackerLoading "正在初始化黑客终端"
-    Invoke-HackerLoading "扫描系统环境"
-    Invoke-HackerLoading "加载加密模块"
+    # 初始加载序列
+    Show-LoadingAnimation -message "启动量子破解核心" -steps 8
+    Start-Sleep (Get-RandomDelay)
     
-    # 检查CS2进程
-    if (-not (Check-CS2Process)) {
-        Write-Host "`n [i] 请在启动CS2后重新运行本程序" -ForegroundColor Yellow
-        Start-Sleep 3
-        exit
-    }
+    Show-LoadingAnimation -message "验证硬件签名" -steps 5
+    Start-Sleep (Get-RandomDelay)
+    
+    Show-LoadingAnimation -message "连接暗网服务器" -steps 6 -maxDelay 1000
+    Start-Sleep (Get-RandomDelay)
+    
+    Invoke-MemoryScan
+    Start-Sleep 1
     
     # 主循环
     while ($true) {
-        $mainChoice = Show-MainMenu
+        $choice = Show-MainMenu
         
-        switch ($mainChoice) {
-            "1" { # 视觉增强
-                $visualChoice = Show-VisualMenu
-                if ($visualChoice -eq "0") { continue }
-                
-                $visualOptions = @("墙壁透视", "玩家发光", "物品高亮", "烟雾透视", "闪光免疫", "视野扩展", "夜视模式")
-                $selected = $visualOptions[[int]$visualChoice-1]
-                Invoke-FakeHack -action "视觉增强 ($selected)"
+        switch ($choice) {
+            "1" { # 量子视觉系统
+                while ($true) {
+                    $visualChoice = Show-VisualMenu
+                    if ($visualChoice -eq "0") { break }
+                    
+                    Invoke-DllInjection
+                    $featureName = @("X射线透视", "电磁光谱", "轮廓高亮", "量子穿烟", "闪光免疫", "红外成像", "重力场")[[int]$visualChoice-1]
+                    Show-LoadingAnimation -message "激活$featureName 模式" -steps (Get-Random -Minimum 4 -Maximum 7)
+                    Write-Host "`n [系统通知] $featureName 已量子激活!" -ForegroundColor Green
+                    Start-Sleep 2
+                }
             }
-            "2" { # 自动瞄准
-                $aimbotChoice = Show-AimbotMenu
-                if ($aimbotChoice -eq "0") { continue }
-                
-                $aimbotOptions = @("头部锁定", "身体锁定", "平滑瞄准", "自动开火", "可见检查", "队友免疫", "FOV设置")
-                $selected = $aimbotOptions[[int]$aimbotChoice-1]
-                Invoke-FakeHack -action "自动瞄准 ($selected)"
-            }
-            "3" { # 雷达增强
-                Invoke-FakeHack -action "雷达增强系统"
-            }
-            "4" { # 反后坐力
-                Invoke-FakeHack -action "反后坐力控制"
-            }
-            "5" { # 游戏信息
-                Invoke-FakeHack -action "游戏信息显示"
-            }
-            "6" { # 高级绕过
-                Invoke-FakeHack -action "VAC绕过系统"
+            "2" { # 神经瞄准网络
+                Invoke-DllInjection
+                Show-LoadingAnimation -message "校准神经瞄准矩阵" -steps 10
+                Write-Host "`n [系统通知] 瞄准网络已同步到脑机接口!" -ForegroundColor Magenta
+                Start-Sleep 2
             }
             "0" { # 退出
-                Write-Host "`n [>] 正在清除所有痕迹..." -ForegroundColor Yellow
-                Start-Sleep 1
-                Write-Host " [>>] 删除内存注入..." -ForegroundColor DarkYellow
-                Start-Sleep 1
-                Write-Host " [>>] 恢复原始DLL..." -ForegroundColor DarkYellow
-                Start-Sleep 1
-                Write-Host " [√] 所有操作已安全撤销!" -ForegroundColor Green
+                Write-Host "`n [>] 启动量子自毁协议..." -ForegroundColor Yellow
+                Start-Sleep (Get-RandomDelay)
+                
+                $steps = @(
+                    "清除内存痕迹",
+                    "混淆API调用记录",
+                    "删除临时文件",
+                    "重置硬件签名",
+                    "关闭所有连接"
+                )
+                
+                foreach ($step in $steps) {
+                    Show-LoadingAnimation -message $step -steps (Get-Random -Minimum 3 -Maximum 6)
+                    Start-Sleep (Get-RandomDelay)
+                }
+                
+                Write-Host "`n [安全通知] 所有量子操作痕迹已消除!" -ForegroundColor Green
                 Start-Sleep 2
                 exit
             }
             default {
-                Write-Host " [!] 无效输入!" -ForegroundColor Red
+                Write-Host " [!] 无效的量子输入!" -ForegroundColor Red
                 Start-Sleep 1
             }
         }
