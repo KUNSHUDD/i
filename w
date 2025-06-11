@@ -1,167 +1,230 @@
 <#
 .SYNOPSIS
-    Steam 高级管理工具 - 黑客主题版
+    CS2 高级控制终端 - 模拟黑客界面
 .DESCRIPTION
-    自动管理 Steam 进程，通过 CDK 验证添加指定游戏
+    模拟CS2外挂控制界面，包含多种功能分类和黑客视觉效果
 .NOTES
-    此脚本仅为模拟效果，不会真正入侵 Steam 服务器
+    此脚本仅为模拟效果，不包含实际作弊功能
+    仅用于学习和演示目的
 #>
 
-# 强制要求管理员权限
+# 管理员检查
 if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
     Write-Host " [!] 需要管理员权限执行此操作" -ForegroundColor Red
     Start-Sleep 2
     exit
 }
 
-# 清屏并设置黑客主题
-function Invoke-HackerTheme {
-    $host.UI.RawUI.BackgroundColor = "Black"
-    $host.UI.RawUI.ForegroundColor = "Green"
-    Clear-Host
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkGreen
-    Write-Host "█                                            █" -ForegroundColor DarkGreen
-    Write-Host "█         Steam 高级控制终端 v3.1.4         █" -ForegroundColor Green
-    Write-Host "█    (需授权密钥激活游戏注入功能)           █" -ForegroundColor DarkGreen
-    Write-Host "█                                            █" -ForegroundColor DarkGreen
-    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkGreen
-    Write-Host ""
-}
-Invoke-HackerTheme
+# 初始化设置
+$host.UI.RawUI.WindowTitle = "CS2 高级控制终端 v4.2.0"
+$host.UI.RawUI.BackgroundColor = "Black"
+$host.UI.RawUI.ForegroundColor = "Green"
+Clear-Host
 
-# CDK 数据库 (可扩展)
-$cdkDatabase = @{
-    "H4X-ST34M-2023" = @{
-        GameName = "半条命3破解版"
-        ExePath  = "C:\Games\HL3\hl3.exe"
-    }
-    "1337-V4LV3" = @{
-        GameName = "Portal 3 测试版"
-        ExePath  = "https://valve.com/secret/portal3.exe"
-    }
-    "CDK-2024-GM" = @{
-        GameName = "GTA6 内部预览版"
-        ExePath  = "C:\Rockstar\GTA6\launcher.exe"
-    }
+# 黑客ASCII艺术
+function Show-AsciiArt {
+    Write-Host @"
+  ____ ____ ___   ___   _____ ____  
+ / ___/ ___|__ \ / _ \ / ____|___ \ 
+| |   \___ \  ) | | | | |      __) |
+| |___ ___) / /| |_| | |___  / __/ 
+ \____|____/____|\___/ \____|_____|
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+█                                █
+█  反恐精英2 高级控制终端 v4.2.0 █
+█  仅限授权用户使用             █
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+"@ -ForegroundColor Green
 }
 
-# 查找并终止 Steam 进程
-Write-Host " [*] 扫描 Steam 进程..." -ForegroundColor Cyan
-$steamProcess = Get-Process -Name "steam*" -ErrorAction SilentlyContinue
-
-if ($steamProcess) {
-    Write-Host " [!] 检测到运行中的 Steam 进程" -ForegroundColor Red
-    $steamProcess | Stop-Process -Force
-    Write-Host " [√] 已终止 Steam 进程 (PID: $($steamProcess.Id))" -ForegroundColor Green
-    Start-Sleep 1
-}
-
-# 自动定位 Steam 安装路径
-Write-Host "`n [*] 定位 Steam 安装目录..." -ForegroundColor Yellow
-$steamPath = $(
-    "${env:ProgramFiles(x86)}\Steam",
-    "${env:ProgramFiles}\Steam",
-    "${env:LocalAppData}\Steam",
-    "C:\Steam"
-) | Where-Object { Test-Path "$_\steam.exe" } | Select-Object -First 1
-
-if (-not $steamPath) {
-    Write-Host " [X] 未找到 Steam 安装目录!" -ForegroundColor Red
-    exit
-}
-
-$steamExe = Join-Path $steamPath "steam.exe"
-Write-Host " [√] Steam 路径: $steamExe" -ForegroundColor Green
-
-# 查找 Steam 游戏库
-Write-Host "`n [*] 分析 Steam 游戏库配置..." -ForegroundColor Magenta
-$libraryFolders = Join-Path $steamPath "steamapps\libraryfolders.vdf"
-
-if (Test-Path $libraryFolders) {
-    $libraries = Get-Content $libraryFolders | 
-                 Where-Object { $_ -match '"path"' } | 
-                 ForEach-Object { $_.Split('"')[3].Replace('\\','\') }
+# 模拟黑客加载效果
+function Invoke-HackerLoading {
+    param([string]$message, [int]$duration=2)
     
-    Write-Host " [√] 发现游戏库位置:" -ForegroundColor Green
-    $libraries | ForEach-Object { Write-Host "     → $_" -ForegroundColor Cyan }
-} else {
-    Write-Host " [!] 未找到 libraryfolders.vdf" -ForegroundColor Yellow
+    Write-Host " [>] $message" -NoNewline -ForegroundColor Cyan
+    for ($i = 0; $i -lt 5; $i++) {
+        Write-Host "." -NoNewline -ForegroundColor Yellow
+        Start-Sleep ($duration/5)
+    }
+    Write-Host " √" -ForegroundColor Green
 }
 
-# CDK 验证系统
-function Invoke-HackerEffect {
-    param([string]$cdk)
-    $phrases = @(
-        "正在使用密钥 [$cdk] 验证身份...",
-        "正在连接至 Steam 主服务器...",
-        "绕过 VAC 检测系统...",
-        "注入代码到 SteamUI.dll...",
-        "获取游戏数据库写入权限...",
-        "正在解密 Valve 内部协议..."
+# 检查CS2进程
+function Check-CS2Process {
+    $cs2Process = Get-Process -Name "cs2" -ErrorAction SilentlyContinue
+    
+    if ($cs2Process) {
+        Write-Host " [√] CS2进程已找到 (PID: $($cs2Process.Id))" -ForegroundColor Green
+        return $true
+    } else {
+        Write-Host " [X] 未检测到CS2进程!" -ForegroundColor Red
+        return $false
+    }
+}
+
+# 主菜单
+function Show-MainMenu {
+    Clear-Host
+    Show-AsciiArt
+    
+    Write-Host "`n▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 主菜单 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkGreen
+    Write-Host " 1. 视觉增强功能" -ForegroundColor Cyan
+    Write-Host " 2. 自动瞄准系统" -ForegroundColor Magenta
+    Write-Host " 3. 雷达增强模块" -ForegroundColor Yellow
+    Write-Host " 4. 反后坐力控制" -ForegroundColor Red
+    Write-Host " 5. 游戏信息显示" -ForegroundColor Blue
+    Write-Host " 6. 高级绕过系统" -ForegroundColor DarkRed
+    Write-Host " 0. 退出系统" -ForegroundColor Gray
+    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkGreen
+    
+    $choice = Read-Host "`n [？] 输入选择 (0-6)"
+    return $choice
+}
+
+# 视觉增强子菜单
+function Show-VisualMenu {
+    Clear-Host
+    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 视觉增强 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkCyan
+    
+    # 模拟功能列表
+    $visualFeatures = @(
+        "墙壁透视 (ESP)",
+        "玩家发光效果",
+        "物品高亮显示",
+        "烟雾透视",
+        "闪光弹免疫",
+        "视野范围扩展",
+        "夜视模式"
     )
+    
+    for ($i = 0; $i -lt $visualFeatures.Count; $i++) {
+        Write-Host " $($i+1). $($visualFeatures[$i])" -ForegroundColor Cyan
+    }
+    Write-Host " 0. 返回主菜单" -ForegroundColor Gray
+    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkCyan
+    
+    $choice = Read-Host "`n [？] 选择视觉功能 (0-$($visualFeatures.Count))"
+    return $choice
+}
+
+# 自动瞄准子菜单
+function Show-AimbotMenu {
+    Clear-Host
+    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 自动瞄准 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkMagenta
+    
+    $aimbotFeatures = @(
+        "头部锁定模式",
+        "身体锁定模式",
+        "动态平滑瞄准",
+        "自动开火",
+        "可见检查",
+        "队友免疫",
+        "自定义FOV设置"
+    )
+    
+    for ($i = 0; $i -lt $aimbotFeatures.Count; $i++) {
+        Write-Host " $($i+1). $($aimbotFeatures[$i])" -ForegroundColor Magenta
+    }
+    Write-Host " 0. 返回主菜单" -ForegroundColor Gray
+    Write-Host "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkMagenta
+    
+    $choice = Read-Host "`n [？] 选择瞄准功能 (0-$($aimbotFeatures.Count))"
+    return $choice
+}
+
+# 模拟黑客效果
+function Invoke-FakeHack {
+    param([string]$action)
+    
+    $phrases = @(
+        "正在注入DLL到CS2进程...",
+        "绕过VAC检测系统...",
+        "解密游戏内存数据...",
+        "获取玩家坐标矩阵...",
+        "修改游戏渲染管线...",
+        "建立安全通信通道...",
+        "混淆API调用痕迹...",
+        "更新特征码签名..."
+    )
+    
+    Write-Host "`n [>] 初始化$action子系统..." -ForegroundColor Yellow
+    Start-Sleep 1
     
     foreach ($phrase in $phrases) {
-        Write-Host " [>] $phrase" -ForegroundColor ([ConsoleColor](Get-Random -Minimum 10 -Maximum 15))
-        Start-Sleep (Get-Random -Minimum 1 -Maximum 3)
+        Write-Host " [>>] $phrase" -ForegroundColor ([ConsoleColor](Get-Random -Minimum 10 -Maximum 15))
+        Start-Sleep (Get-Random -Minimum 1 -Maximum 3)/2
     }
-}
-
-Write-Host "`n▓▓▓▓▓▓▓▓▓▓▓▓▓▓ 安全验证 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓" -ForegroundColor DarkRed
-$userCDK = Read-Host " [？] 输入 CDK 密钥"
-
-if (-not $cdkDatabase.ContainsKey($userCDK)) {
-    Write-Host "`n [X] 密钥验证失败! 启动 Steam 并自毁..." -ForegroundColor Red
-    Start-Process $steamExe
+    
+    Write-Host " [√] $action 已成功激活!" -ForegroundColor Green
     Start-Sleep 2
-    exit
 }
 
-# 验证通过流程
-Invoke-HackerEffect -cdk $userCDK
-Write-Host "`n [√] 密钥验证成功!" -ForegroundColor Green
-Write-Host " [★] 解锁游戏: $($cdkDatabase[$userCDK].GameName)" -ForegroundColor Cyan
-Start-Sleep 2
-
-# 模拟添加游戏到 Steam
-function Add-SteamShortcut {
-    param(
-        [string]$gameName,
-        [string]$exePath
-    )
+# 主程序逻辑
+function Main {
+    # 初始加载效果
+    Show-AsciiArt
+    Invoke-HackerLoading "正在初始化黑客终端"
+    Invoke-HackerLoading "扫描系统环境"
+    Invoke-HackerLoading "加载加密模块"
     
-    Write-Host "`n [*] 正在操作 Steam 配置文件..." -ForegroundColor Yellow
-    Start-Sleep 1
+    # 检查CS2进程
+    if (-not (Check-CS2Process)) {
+        Write-Host "`n [i] 请在启动CS2后重新运行本程序" -ForegroundColor Yellow
+        Start-Sleep 3
+        exit
+    }
     
-    # 模拟查找用户配置
-    $userDataPath = Join-Path $steamPath "userdata"
-    $shortcutPath = Get-ChildItem $userDataPath -Recurse -Filter "shortcuts.vdf" | 
-                    Select-Object -First 1 -ExpandProperty FullName
-    
-    if ($shortcutPath) {
-        Write-Host " [√] 找到 shortcuts.vdf 位置: $shortcutPath" -ForegroundColor Green
-        Write-Host " [>] 正在添加游戏: $gameName" -ForegroundColor Cyan
-        Write-Host " [>] 游戏路径: $exePath" -ForegroundColor Cyan
-        Start-Sleep 2
+    # 主循环
+    while ($true) {
+        $mainChoice = Show-MainMenu
         
-        # 这里应该实际修改 shortcuts.vdf 文件
-        # 实际实现需要使用专门的 VDF 解析器
-        
-        Write-Host "`n [操作成功总结]" -ForegroundColor Green
-        Write-Host " ▸ 游戏名称: $gameName" -ForegroundColor White
-        Write-Host " ▸ 执行路径: $exePath" -ForegroundColor White
-        Write-Host " ▸ 添加位置: 非 Steam 游戏库" -ForegroundColor White
-    } else {
-        Write-Host " [X] 未找到 shortcuts.vdf 文件!" -ForegroundColor Red
+        switch ($mainChoice) {
+            "1" { # 视觉增强
+                $visualChoice = Show-VisualMenu
+                if ($visualChoice -eq "0") { continue }
+                
+                $visualOptions = @("墙壁透视", "玩家发光", "物品高亮", "烟雾透视", "闪光免疫", "视野扩展", "夜视模式")
+                $selected = $visualOptions[[int]$visualChoice-1]
+                Invoke-FakeHack -action "视觉增强 ($selected)"
+            }
+            "2" { # 自动瞄准
+                $aimbotChoice = Show-AimbotMenu
+                if ($aimbotChoice -eq "0") { continue }
+                
+                $aimbotOptions = @("头部锁定", "身体锁定", "平滑瞄准", "自动开火", "可见检查", "队友免疫", "FOV设置")
+                $selected = $aimbotOptions[[int]$aimbotChoice-1]
+                Invoke-FakeHack -action "自动瞄准 ($selected)"
+            }
+            "3" { # 雷达增强
+                Invoke-FakeHack -action "雷达增强系统"
+            }
+            "4" { # 反后坐力
+                Invoke-FakeHack -action "反后坐力控制"
+            }
+            "5" { # 游戏信息
+                Invoke-FakeHack -action "游戏信息显示"
+            }
+            "6" { # 高级绕过
+                Invoke-FakeHack -action "VAC绕过系统"
+            }
+            "0" { # 退出
+                Write-Host "`n [>] 正在清除所有痕迹..." -ForegroundColor Yellow
+                Start-Sleep 1
+                Write-Host " [>>] 删除内存注入..." -ForegroundColor DarkYellow
+                Start-Sleep 1
+                Write-Host " [>>] 恢复原始DLL..." -ForegroundColor DarkYellow
+                Start-Sleep 1
+                Write-Host " [√] 所有操作已安全撤销!" -ForegroundColor Green
+                Start-Sleep 2
+                exit
+            }
+            default {
+                Write-Host " [!] 无效输入!" -ForegroundColor Red
+                Start-Sleep 1
+            }
+        }
     }
 }
 
-# 从 CDK 数据库获取游戏信息
-$gameInfo = $cdkDatabase[$userCDK]
-Add-SteamShortcut -gameName $gameInfo.GameName -exePath $gameInfo.ExePath
-
-# 启动 Steam
-Write-Host "`n [*] 正在启动 Steam 客户端..." -ForegroundColor Yellow
-Start-Process $steamExe
-
-Write-Host "`n [i] 按任意键退出黑客终端..." -ForegroundColor DarkGray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+# 启动主程序
+Main
